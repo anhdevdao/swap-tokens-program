@@ -1,0 +1,16 @@
+[features]
+seeds = false
+
+[programs.localnet]
+swap_tokens = "7cB8uQty7ZjK2Mq4ZDsBQNWUpUaLEHwfZKHLvS55k7rz"
+
+[registry]
+url = "https://anchor.projectserum.com"
+
+[provider]
+cluster = "localnet"
+wallet = "~/.config/solana/id.json"
+
+[scripts]
+test = "yarn run ts-mocha -p ./tsconfig.json -t 1000000 tests/**/*.ts"
+create-mote-token = "ts-node scripts/creat-move-token.ts"
