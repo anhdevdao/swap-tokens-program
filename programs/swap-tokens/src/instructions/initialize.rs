@@ -37,11 +37,13 @@ pub fn exec(
   pool_bump: u8,
   pool_move_bump: u8,
   swap_rate: u64,
+  lamports: u64,
   amount: u64,
 ) -> Result<()> {
   let pool = &mut ctx.accounts.pool_account;
 
   invariant!(swap_rate > 0, SwapTokenErrorCode::InvalidSwapRate);
+  invariant!(lamports > 0, SwapTokenErrorCode::CannotAddLiquidityZero);
   invariant!(amount > 0, SwapTokenErrorCode::CannotAddLiquidityZero);
 
   pool.owner = ctx.accounts.signer.key();
@@ -49,9 +51,25 @@ pub fn exec(
   pool.move_token = ctx.accounts.move_token.key();
   pool.move_token_account_bump = pool_move_bump;
   pool.swap_rate = swap_rate;
-  pool.total_supply = amount;
+  pool.sol_total_supply = lamports;
+  pool.move_total_supply = amount;
   pool.paused = false;
 
+  // Deposit SOL into pool
+  invoke(
+    &system_instruction::transfer(
+      &ctx.accounts.signer.key(),
+      &ctx.accounts.pool_account.key(),
+      lamports,
+    ),
+    &[
+      ctx.accounts.signer.to_account_info(),
+      ctx.accounts.pool_account.to_account_info(),
+      ctx.accounts.system_program.to_account_info(),
+    ],
+  )?;
+
+  // Deposit MOVE into pool
   token::transfer(
     CpiContext::new(
       ctx.accounts.token_program.to_account_info(),

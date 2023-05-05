@@ -20,11 +20,11 @@ async function mintMoveToken(tokenAccount: web3.PublicKey) {
       moveToken,
       tokenAccount,
       authority,
-      1_000_000_000_000, // 1000 MOVE
+      1_000_000_000_000_000, // 1_000,000 MOVE
       9
     );
 
-    console.log(`Mint to ${tokenAccount} 1000 MOVE`);
+    console.log(`Mint to ${tokenAccount} 1,000,000 MOVE`);
 }
 
 mintMoveToken(new web3.PublicKey(process.env.OWNER_TOKEN_ACCOUNT));

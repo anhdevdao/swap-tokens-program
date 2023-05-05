@@ -24,6 +24,7 @@ pub mod swap_tokens {
   pub fn initialize(
     ctx: Context<Initialize>,
     swap_rate: u64,
+    lamports: u64,
     amount: u64,
   ) -> Result<()> {
     let pool_bump = *ctx.bumps.get("pool_account").unwrap();
@@ -34,6 +35,7 @@ pub mod swap_tokens {
       pool_bump,
       pool_move_bump,
       swap_rate,
+      lamports,
       amount,
     )
   }
@@ -41,19 +43,30 @@ pub mod swap_tokens {
   #[access_control(ctx.accounts.pool_account.when_not_paused())]
   pub fn add_liquidity(
     ctx: Context<AddLiquidity>,
+    lamports: u64,
     amount: u64,
   ) -> Result<()> {
-    add_liquidity::exec(ctx, amount)
+    add_liquidity::exec(ctx, lamports, amount)
   }
 
   #[access_control(ctx.accounts.pool_account.when_not_paused())]
-  pub fn swap(
-    ctx: Context<Swap>,
+  pub fn swap_sol_for_move(
+    ctx: Context<SwapSOLForMOVE>,
     lamports: u64,
   ) -> Result<()> {
-    swap::exec(ctx, lamports)
+    swap_sol_for_move::exec(ctx, lamports)
   }
 
+
+  #[access_control(ctx.accounts.pool_account.when_not_paused())]
+  pub fn swap_move_for_sol(
+    ctx: Context<SwapMOVEForSOL>,
+    amount: u64,
+  ) -> Result<()> {
+    swap_move_for_sol::exec(ctx, amount)
+  }
+
+  // Swap rate buy SOL get MOVE
   pub fn set_swap_rate(
     ctx: Context<SetSwapRate>,
     rate: u64,

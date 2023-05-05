@@ -52,6 +52,10 @@ export type SwapTokens = {
           "type": "u64"
         },
         {
+          "name": "lamports",
+          "type": "u64"
+        },
+        {
           "name": "amount",
           "type": "u64"
         }
@@ -93,13 +97,17 @@ export type SwapTokens = {
       ],
       "args": [
         {
+          "name": "lamports",
+          "type": "u64"
+        },
+        {
           "name": "amount",
           "type": "u64"
         }
       ]
     },
     {
-      "name": "swap",
+      "name": "swapSolForMove",
       "accounts": [
         {
           "name": "signer",
@@ -122,7 +130,43 @@ export type SwapTokens = {
           "isSigner": false
         },
         {
-          "name": "fundingWallet",
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "tokenProgram",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": [
+        {
+          "name": "lamports",
+          "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "swapMoveForSol",
+      "accounts": [
+        {
+          "name": "signer",
+          "isMut": true,
+          "isSigner": true
+        },
+        {
+          "name": "signerTokenAccount",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "poolAccount",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "poolMoveTokenAccount",
           "isMut": true,
           "isSigner": false
         },
@@ -139,7 +183,7 @@ export type SwapTokens = {
       ],
       "args": [
         {
-          "name": "lamports",
+          "name": "amount",
           "type": "u64"
         }
       ]
@@ -214,7 +258,11 @@ export type SwapTokens = {
             "type": "u64"
           },
           {
-            "name": "totalSupply",
+            "name": "solTotalSupply",
+            "type": "u64"
+          },
+          {
+            "name": "moveTotalSupply",
             "type": "u64"
           },
           {
@@ -229,6 +277,11 @@ export type SwapTokens = {
     {
       "name": "AddLiquidityEvent",
       "fields": [
+        {
+          "name": "lamports",
+          "type": "u64",
+          "index": false
+        },
         {
           "name": "amount",
           "type": "u64",
@@ -257,7 +310,22 @@ export type SwapTokens = {
       ]
     },
     {
-      "name": "SwapEvent",
+      "name": "SwapMOVEForSOLEvent",
+      "fields": [
+        {
+          "name": "amount",
+          "type": "u64",
+          "index": false
+        },
+        {
+          "name": "solAmount",
+          "type": "u64",
+          "index": false
+        }
+      ]
+    },
+    {
+      "name": "SwapSOLForMOVEEvent",
       "fields": [
         {
           "name": "lamports",
@@ -295,33 +363,23 @@ export type SwapTokens = {
     },
     {
       "code": 6004,
-      "name": "InsufficientMoveBalance",
-      "msg": "Insufficient MOVE balance"
+      "name": "InsufficientSOLBalance",
+      "msg": "Insufficient SOL balance"
     },
     {
       "code": 6005,
+      "name": "InsufficientMOVEBalance",
+      "msg": "Insufficient MOVE balance"
+    },
+    {
+      "code": 6006,
       "name": "Paused",
       "msg": "Paused"
     },
     {
-      "code": 6006,
+      "code": 6007,
       "name": "OnlyPoolOwner",
       "msg": "Only pool owner"
-    },
-    {
-      "code": 6007,
-      "name": "CannotWithdrawZero",
-      "msg": "Cannot withdraw 0"
-    },
-    {
-      "code": 6008,
-      "name": "InsufficientSolBalance",
-      "msg": "Insufficient SOL balance"
-    },
-    {
-      "code": 6009,
-      "name": "NotPaused",
-      "msg": "Not paused"
     }
   ]
 };
@@ -380,6 +438,10 @@ export const IDL: SwapTokens = {
           "type": "u64"
         },
         {
+          "name": "lamports",
+          "type": "u64"
+        },
+        {
           "name": "amount",
           "type": "u64"
         }
@@ -421,13 +483,17 @@ export const IDL: SwapTokens = {
       ],
       "args": [
         {
+          "name": "lamports",
+          "type": "u64"
+        },
+        {
           "name": "amount",
           "type": "u64"
         }
       ]
     },
     {
-      "name": "swap",
+      "name": "swapSolForMove",
       "accounts": [
         {
           "name": "signer",
@@ -450,7 +516,43 @@ export const IDL: SwapTokens = {
           "isSigner": false
         },
         {
-          "name": "fundingWallet",
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "tokenProgram",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": [
+        {
+          "name": "lamports",
+          "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "swapMoveForSol",
+      "accounts": [
+        {
+          "name": "signer",
+          "isMut": true,
+          "isSigner": true
+        },
+        {
+          "name": "signerTokenAccount",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "poolAccount",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "poolMoveTokenAccount",
           "isMut": true,
           "isSigner": false
         },
@@ -467,7 +569,7 @@ export const IDL: SwapTokens = {
       ],
       "args": [
         {
-          "name": "lamports",
+          "name": "amount",
           "type": "u64"
         }
       ]
@@ -542,7 +644,11 @@ export const IDL: SwapTokens = {
             "type": "u64"
           },
           {
-            "name": "totalSupply",
+            "name": "solTotalSupply",
+            "type": "u64"
+          },
+          {
+            "name": "moveTotalSupply",
             "type": "u64"
           },
           {
@@ -557,6 +663,11 @@ export const IDL: SwapTokens = {
     {
       "name": "AddLiquidityEvent",
       "fields": [
+        {
+          "name": "lamports",
+          "type": "u64",
+          "index": false
+        },
         {
           "name": "amount",
           "type": "u64",
@@ -585,7 +696,22 @@ export const IDL: SwapTokens = {
       ]
     },
     {
-      "name": "SwapEvent",
+      "name": "SwapMOVEForSOLEvent",
+      "fields": [
+        {
+          "name": "amount",
+          "type": "u64",
+          "index": false
+        },
+        {
+          "name": "solAmount",
+          "type": "u64",
+          "index": false
+        }
+      ]
+    },
+    {
+      "name": "SwapSOLForMOVEEvent",
       "fields": [
         {
           "name": "lamports",
@@ -623,33 +749,23 @@ export const IDL: SwapTokens = {
     },
     {
       "code": 6004,
-      "name": "InsufficientMoveBalance",
-      "msg": "Insufficient MOVE balance"
+      "name": "InsufficientSOLBalance",
+      "msg": "Insufficient SOL balance"
     },
     {
       "code": 6005,
+      "name": "InsufficientMOVEBalance",
+      "msg": "Insufficient MOVE balance"
+    },
+    {
+      "code": 6006,
       "name": "Paused",
       "msg": "Paused"
     },
     {
-      "code": 6006,
+      "code": 6007,
       "name": "OnlyPoolOwner",
       "msg": "Only pool owner"
-    },
-    {
-      "code": 6007,
-      "name": "CannotWithdrawZero",
-      "msg": "Cannot withdraw 0"
-    },
-    {
-      "code": 6008,
-      "name": "InsufficientSolBalance",
-      "msg": "Insufficient SOL balance"
-    },
-    {
-      "code": 6009,
-      "name": "NotPaused",
-      "msg": "Not paused"
     }
   ]
 };

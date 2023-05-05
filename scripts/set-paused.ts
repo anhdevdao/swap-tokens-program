@@ -23,14 +23,14 @@ async function setPaused() {
 
   const program = new Program(
     IDL,
-    new PublicKey(process.env.PROGRAM_ID),
+    new PublicKey(process.env.PROGRAM),
     provider
   )
 
   const wrapper = new PoolWrapper(program, authorityWallet);
 
   const sentSignature = await wrapper.setPaused({
-    paused: true,
+    paused: false,
   });
 
   console.log({

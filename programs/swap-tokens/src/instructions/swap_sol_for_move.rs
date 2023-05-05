@@ -1,7 +1,7 @@
 use crate::*;
 
 #[derive(Accounts)]
-pub struct Swap<'info> {
+pub struct SwapSOLForMOVE<'info> {
   #[account(mut)]
   pub signer: Signer<'info>,
   #[account(mut)]
@@ -18,40 +18,37 @@ pub struct Swap<'info> {
     bump = pool_account.move_token_account_bump,
   )]
   pub pool_move_token_account: Box<Account<'info, TokenAccount>>,
-  /// CHECK: wallet which receive fund
-  #[account(
-    mut,
-    address = pool_account.owner
-  )]
-  pub funding_wallet: AccountInfo<'info>,
   pub system_program: Program<'info, System>,
   pub token_program: Program<'info, Token>,
 }
 
 pub fn exec(
-  ctx: Context<Swap>,
+  ctx: Context<SwapSOLForMOVE>,
   lamports: u64,
 ) -> Result<()> {
   let pool = &mut ctx.accounts.pool_account;
+  let pool_owner = pool.owner;
+  let pool_bump = pool.bump;
 
   invariant!(lamports > 0, SwapTokenErrorCode::CannotSwapZero);
 
   let move_amount = pool.swap_rate * lamports;
 
-  invariant!(pool.total_supply >= move_amount, SwapTokenErrorCode::InsufficientMoveBalance);
+  invariant!(pool.move_total_supply >= move_amount, SwapTokenErrorCode::InsufficientMOVEBalance);
 
-  pool.total_supply -= move_amount;
+  pool.sol_total_supply += lamports;
+  pool.move_total_supply -= move_amount;
 
   // Deposit SOL into pool
   invoke(
     &system_instruction::transfer(
       &ctx.accounts.signer.key(),
-      &pool.owner,
+      &pool.key(),
       lamports,
     ),
     &[
       ctx.accounts.signer.to_account_info(),
-      ctx.accounts.funding_wallet.to_account_info(),
+      ctx.accounts.pool_account.to_account_info(),
       ctx.accounts.system_program.to_account_info(),
     ],
   )?;
@@ -59,8 +56,8 @@ pub fn exec(
   // Return MOVE to user
   let seeds = &[
     POOL_SEED,
-    pool.owner.as_ref(),
-    &[pool.bump],
+    pool_owner.as_ref(),
+    &[pool_bump],
   ];
   let signer = &[&seeds[..]];
   token::transfer(
@@ -69,20 +66,20 @@ pub fn exec(
       Transfer {
         from: ctx.accounts.pool_move_token_account.to_account_info(),
         to: ctx.accounts.signer_token_account.to_account_info(),
-        authority: pool.to_account_info(),
+        authority: ctx.accounts.pool_account.to_account_info(),
       },
       signer,
     ),
     move_amount,
   )?;
 
-  swap_emit!(SwapEvent { lamports, move_amount });
+  swap_sol_for_move_emit!(SwapSOLForMOVEEvent { lamports, move_amount });
 
   Ok(())
 }
 
 #[event]
-pub struct SwapEvent {
+pub struct SwapSOLForMOVEEvent {
   lamports: u64,
   move_amount: u64,
 }

@@ -1,15 +1,16 @@
 import {
   Box,
+  Select,
   Button,
   FormControl,
   FormLabel,
   NumberInput,
   NumberInputField,
 } from "@chakra-ui/react"
-import { FC, useEffect, useState } from "react"
+import { FC, useState } from "react"
 import { AnchorProvider, BN, Program } from "@project-serum/anchor"
 import * as Web3 from "@solana/web3.js"
-import { LAMPORTS_PER_SOL } from '@solana/web3.js';
+import { LAMPORTS_PER_SOL, TransactionInstruction } from '@solana/web3.js';
 import { useConnection, useWallet } from "@solana/wallet-adapter-react"
 import { ToastContainer, toast } from "react-toastify"
 import {
@@ -23,16 +24,15 @@ import { IDL } from '../utils/idl/swap_tokens'
 import { useGetBalance } from "../hooks/useGetBalance"
 
 export const SwapToken: FC = () => {
-  const { getBalance } = useGetBalance()
-
-  const [solAmount, setSolAmount] = useState(0)
+  const [mint, setMint] = useState("sol")
+  const [swapAmount, setSwapAmount] = useState(0)
 
   const { connection } = useConnection()
   const { publicKey, wallet, sendTransaction, signTransaction, signAllTransactions } = useWallet();
 
-  useEffect(() => {
-
-  })
+  const sleep = async (ms: number) => {
+    return new Promise((r) => setTimeout(r, ms));
+  };
 
   const handleSwapSubmit = (event: any) => {
     event.preventDefault()
@@ -71,31 +71,53 @@ export const SwapToken: FC = () => {
       provider
     )
 
-    const poolAccountInfo = await program.account["pool"].fetch(poolAccount);
-
-    const instruction = await program.methods.swap(
-      new BN(solAmount*LAMPORTS_PER_SOL)
-    ).accounts({
-      signer: publicKey,
-      signerTokenAccount: moveATA,
-      poolAccount,
-      poolMoveTokenAccount,
-      fundingWallet: poolAccountInfo.owner,
-      systemProgram: Web3.SystemProgram.programId,
-      tokenProgram: token.TOKEN_PROGRAM_ID,
-    }).instruction();
+    let instruction: TransactionInstruction;
+    if (mint === "sol") {
+      instruction = await program.methods.swapSolForMove(
+        new BN(swapAmount * LAMPORTS_PER_SOL)
+      ).accounts({
+        signer: publicKey,
+        signerTokenAccount: moveATA,
+        poolAccount,
+        poolMoveTokenAccount,
+        systemProgram: Web3.SystemProgram.programId,
+        tokenProgram: token.TOKEN_PROGRAM_ID,
+      }).instruction();
+    } else {
+      instruction = await program.methods.swapMoveForSol(
+        new BN(swapAmount * LAMPORTS_PER_SOL)
+      ).accounts({
+        signer: publicKey,
+        signerTokenAccount: moveATA,
+        poolAccount,
+        poolMoveTokenAccount,
+        systemProgram: Web3.SystemProgram.programId,
+        tokenProgram: token.TOKEN_PROGRAM_ID,
+      }).instruction();
+    }
 
     try {
-      const signature = await sendTransaction(
-        new Web3.Transaction().add(instruction),
-        connection
-      );
+      const transaction = new Web3.Transaction().add(instruction)
+      let blockhash = (await connection.getLatestBlockhash('finalized')).blockhash;
+      transaction.recentBlockhash = blockhash;
+      transaction.feePayer = publicKey;
+      const signedTransaction = await signTransaction(transaction)
+      const rawTransaction = signedTransaction.serialize();
+      const blockhashResponse = await connection.getLatestBlockhashAndContext();
+      const lastValidBlockHeight = blockhashResponse.context.slot + 5;
+      let blockheight = await connection.getBlockHeight();
 
-      connection.confirmTransaction(signature, "processed").then(() => {
-        getBalance()
-      })
-
+      let signature = await connection.sendRawTransaction(rawTransaction, {
+        skipPreflight: true,
+      });
       toast.success(`Transaction sent! Transaction Signature: ${signature}`)
+      while (blockheight < lastValidBlockHeight) {
+        signature = await connection.sendRawTransaction(rawTransaction, {
+          skipPreflight: true,
+        });
+        await sleep(500);
+        blockheight = await connection.getBlockHeight()
+      }
     } catch (error) {
       toast.error(`Transaction failed: ${error}`)
     }
@@ -112,19 +134,47 @@ export const SwapToken: FC = () => {
       <form onSubmit={handleSwapSubmit}>
         <FormControl>
           <FormLabel color="gray.200">
-            Swap SOL to get MOVE
+            Swap
           </FormLabel>
           <NumberInput
             max={1000}
             min={0}
             onChange={(valueString) =>
-              setSolAmount(parseFloat(valueString))
+              setSwapAmount(parseFloat(valueString))
             }
           >
             <NumberInputField
               id="amount"
               color="gray.400" />
           </NumberInput>
+          <div style={{ display: "felx" }}>
+            <Select
+              display={{ md: "flex" }}
+              justifyContent="center"
+              placeholder="Token to Swap"
+              color="white"
+              variant="outline"
+              dropShadow="#282c34"
+              onChange={(item) =>
+                setMint(item.currentTarget.value)
+              }
+            >
+              <option
+                style={{ color: "#282c34" }}
+                value="sol"
+              >
+                {" "}
+                SOL{" "}
+              </option>
+              <option
+                style={{ color: "#282c34" }}
+                value="move"
+              >
+                {" "}
+                MOVE{" "}
+              </option>
+            </Select>
+          </div>
         </FormControl>
         <Button width="full" mt={4} type="submit">
           Swap ⇅

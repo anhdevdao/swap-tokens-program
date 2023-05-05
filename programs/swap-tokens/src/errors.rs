@@ -10,8 +10,10 @@ pub enum SwapTokenErrorCode {
   CannotSwapZero,
   #[msg("Invalid swap rate")]
   InvalidSwapRate,
+  #[msg("Insufficient SOL balance")]
+  InsufficientSOLBalance,
   #[msg("Insufficient MOVE balance")]
-  InsufficientMoveBalance,
+  InsufficientMOVEBalance,
   #[msg("Paused")]
   Paused,
   #[msg("Only pool owner")]

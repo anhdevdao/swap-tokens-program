@@ -36,6 +36,7 @@ async function initializePool() {
   const sentSignature = await wrapper.initializePool({
     moveToken,
     swapRate: new BN(10),
+    solAmount: new BN(1_000_000_000),
     moveAmount: new BN(1_000_000_000_000),
   });
 

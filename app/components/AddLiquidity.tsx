@@ -1,5 +1,6 @@
 import {
   Box,
+  Select,
   Button,
   FormControl,
   FormLabel,
@@ -9,6 +10,7 @@ import {
 import { FC, useState } from "react"
 import { AnchorProvider, BN, Program } from "@project-serum/anchor"
 import * as Web3 from "@solana/web3.js"
+import { LAMPORTS_PER_SOL } from '@solana/web3.js';
 import { useConnection, useWallet } from "@solana/wallet-adapter-react"
 import { ToastContainer, toast } from "react-toastify"
 import 'react-toastify/dist/ReactToastify.css';
@@ -25,6 +27,7 @@ import { useGetBalance } from "../hooks/useGetBalance"
 export const AddLiquidityType: FC = () => {
   const { getBalance } = useGetBalance()
 
+  const [solAmount, setSolAmount] = useState(0)
   const [moveAmount, setMoveAmount] = useState(0)
 
   const { connection } = useConnection()
@@ -66,8 +69,10 @@ export const AddLiquidityType: FC = () => {
       new Web3.PublicKey(poolProgramId),
       provider
     )
+    console.log(">>>>", solAmount, moveAmount)
 
     const instruction = await program.methods.addLiquidity(
+      new BN(solAmount * LAMPORTS_PER_SOL),
       new BN(moveAmount * 1e9)
     ).accounts({
       signer: publicKey,
@@ -108,6 +113,23 @@ export const AddLiquidityType: FC = () => {
             <FormLabel color="gray.200">
               Add MOVE to Liquidity Pool
             </FormLabel>
+            <FormLabel color="gray.200">
+              SOL Amount
+            </FormLabel>
+            <NumberInput
+              onChange={(valueString) =>
+                setSolAmount(parseFloat(valueString))
+              }
+              style={{
+                fontSize: 20,
+              }}
+              placeholder="0.00"
+            >
+              <NumberInputField id="amount" color="gray.400" />
+            </NumberInput>
+            <FormLabel color="gray.200">
+              MOVE Amount
+            </FormLabel>
             <NumberInput
               onChange={(valueString) =>
                 setMoveAmount(parseFloat(valueString))
@@ -120,7 +142,7 @@ export const AddLiquidityType: FC = () => {
               <NumberInputField id="amount" color="gray.400" />
             </NumberInput>
             <Button width="full" mt={4} type="submit">
-              Add MOVE
+              Add Liquidity
             </Button>
             <ToastContainer />
           </FormControl>

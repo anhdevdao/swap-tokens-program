@@ -12,7 +12,7 @@ export const AppBar: FC = () => {
                 height={30}
                 width={200}
             />
-            <span>Swap MOVE Portal</span>
+            <span>Swap MOVE Portal (Testnet)</span>
             <WalletMultiButton />
         </div>
     )

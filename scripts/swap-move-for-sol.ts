@@ -1,11 +1,12 @@
-import { AnchorProvider, Program, web3 } from "@project-serum/anchor";
+import { AnchorProvider, BN, Program, web3 } from "@project-serum/anchor";
 import NodeWallet from "@project-serum/anchor/dist/cjs/nodewallet";
 import { bs58 } from "@project-serum/anchor/dist/cjs/utils/bytes";
 import { IDL } from "../target/types/swap_tokens";
 import { PublicKey } from "@solana/web3.js";
+import { PoolWrapper } from "../src/PoolWrapper";
 require("dotenv").config();
 
-async function getPoolInfo() {
+async function swapMoveForSol() {
   const connection = new web3.Connection(
     process.env.RPC,
     "processed"
@@ -26,18 +27,15 @@ async function getPoolInfo() {
     provider
   )
 
-  const poolAccountInfo = await program.account["pool"].fetch(process.env.POOL_ACCOUNT);
+  const wrapper = new PoolWrapper(program, authorityWallet);
 
-  console.log("poolAccountInfo: ", {
-    owner: poolAccountInfo.owner.toString(),
-    bump: poolAccountInfo.bump,
-    moveToken: poolAccountInfo.moveToken.toString(),
-    moveTokenAccountBump: poolAccountInfo.moveTokenAccountBump,
-    swapRate: poolAccountInfo.swapRate.toString(),
-    solTotalSupply: poolAccountInfo.solTotalSupply.toString(),
-    moveTotalSupply: poolAccountInfo.moveTotalSupply.toString(),
-    paused: poolAccountInfo.paused,
+  const sentSignature = await wrapper.swapMoveForSol({
+    amount: new BN(1_000_000_000),
   });
+
+  console.log({
+    swapSignature: sentSignature,
+  })
 }
 
-getPoolInfo();
+swapMoveForSol();

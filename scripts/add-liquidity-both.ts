@@ -6,7 +6,7 @@ import { PublicKey } from "@solana/web3.js";
 import { PoolWrapper } from "../src/PoolWrapper";
 require("dotenv").config();
 
-async function setSwapRate() {
+async function addLiquidity() {
   const connection = new web3.Connection(
     process.env.RPC,
     "processed"
@@ -23,19 +23,30 @@ async function setSwapRate() {
 
   const program = new Program(
     IDL,
-    new PublicKey(process.env.PROGRAM),
+    new PublicKey("7cB8uQty7ZjK2Mq4ZDsBQNWUpUaLEHwfZKHLvS55k7rz"),
     provider
   )
 
   const wrapper = new PoolWrapper(program, authorityWallet);
 
-  const sentSignature = await wrapper.setSwapRate({
-    swapRate: new BN(10),
+  const moveToken = new web3.PublicKey(
+    process.env.MOVE_TOKEN
+  );
+
+  const sentSignature = await wrapper.addLiquidity({
+    moveToken,
+    solAmount: new BN(1_000_000_000),
+    moveAmount: new BN(1_000_000_000_000),
   });
 
+  const [poolAccount] = await wrapper.getPoolAccount();
+  const [poolMoveTokenAccount] = await wrapper.getPoolMoveTokenAccount(poolAccount);
+
   console.log({
-    setSwapRateSignature: sentSignature,
+    addLiquiditySignature: sentSignature,
+    poolAccount: poolAccount.toBase58(),
+    poolMoveTokenAccount: poolMoveTokenAccount.toBase58()
   })
 }
 
-setSwapRate();
+addLiquidity();

@@ -11,25 +11,8 @@ async function createMoveBalance() {
   let tokenAmount = await connection.getTokenAccountBalance(new web3.PublicKey(process.env.OWNER_TOKEN_ACCOUNT));
 
   console.log({
-    tokenAmount: tokenAmount,
+    tokenAmount: tokenAmount.value.uiAmount,
   });
-
-  let tokenAccount = await getAssociatedTokenAddress(
-    new web3.PublicKey(process.env.MOVE_TOKEN),
-    new web3.PublicKey(process.env.OWNER)
-  );
-
-  let account = await connection.getAccountInfo(tokenAccount)
-  console.log(account);
-
-  // if (account == null) {
-  //   await createAssociatedTokenAccount(
-  //     connection,
-  //     authority,
-  //     moveToken,
-  //     authority.publicKey
-  //   );
-  // }
 }
 
 createMoveBalance();

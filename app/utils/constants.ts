@@ -1,7 +1,7 @@
 import * as Web3 from "@solana/web3.js"
 
 export const moveToken = new Web3.PublicKey(
-  "DmQWQEdprArg8PKUuR2F2ZH1y4VwrpCJYRYrQZJpf1vd"
+  "5U5X5nzrYzTP8derUP31VzVxFyXC5zivXsx9J4w6RGvX"
 )
 
 export const poolProgramId = new Web3.PublicKey(

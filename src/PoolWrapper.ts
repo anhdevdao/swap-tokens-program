@@ -38,6 +38,7 @@ export class PoolWrapper {
   public async initializePool(params: {
     moveToken: web3.PublicKey,
     swapRate: BN,
+    solAmount: BN,
     moveAmount: BN,
   }) {
     const [poolAccount] = await this.getPoolAccount();
@@ -52,6 +53,7 @@ export class PoolWrapper {
 
     return await this.program.methods.initialize(
       params.swapRate,
+      params.solAmount,
       params.moveAmount
     ).accounts({
       signer: this.wallet.publicKey,
@@ -67,14 +69,14 @@ export class PoolWrapper {
 
   public async addLiquidity(params: {
     moveToken: web3.PublicKey,
-    swapRate: BN,
+    solAmount: BN,
     moveAmount: BN,
   }) {
     const [poolAccount] = await this.getPoolAccount();
     const [poolMoveTokenAccount] = await this.getPoolMoveTokenAccount(
       poolAccount
     );
-    
+
     const poolAccountInfo = await this.program.account["pool"].fetch(process.env.POOL_ACCOUNT);
 
     const signerTokenAccount = await getAssociatedTokenAddress(
@@ -83,6 +85,7 @@ export class PoolWrapper {
     );
 
     return await this.program.methods.addLiquidity(
+      params.solAmount,
       params.moveAmount
     ).accounts({
       signer: this.wallet.publicKey,
@@ -120,7 +123,7 @@ export class PoolWrapper {
     }).rpc();
   }
 
-  public async swap(params: {
+  public async swapSolForMove(params: {
     lamports: BN,
   }) {
     const [poolAccount] = await this.getPoolAccount();
@@ -135,8 +138,35 @@ export class PoolWrapper {
       this.wallet.publicKey
     );
 
-    return await this.program.methods.swap(
+    return await this.program.methods.swapSolForMove(
       params.lamports,
+    ).accounts({
+      signer: this.wallet.publicKey,
+      signerTokenAccount,
+      poolAccount,
+      poolMoveTokenAccount,
+      systemProgram: web3.SystemProgram.programId,
+      tokenProgram: TOKEN_PROGRAM_ID,
+    }).rpc();
+  }
+
+  public async swapMoveForSol(params: {
+    amount: BN,
+  }) {
+    const [poolAccount] = await this.getPoolAccount();
+    const [poolMoveTokenAccount] = await this.getPoolMoveTokenAccount(
+      poolAccount
+    );
+
+    const poolAccountInfo = await this.program.account["pool"].fetch(process.env.POOL_ACCOUNT);
+
+    const signerTokenAccount = await getAssociatedTokenAddress(
+      poolAccountInfo.moveToken,
+      this.wallet.publicKey
+    );
+
+    return await this.program.methods.swapMoveForSol(
+      params.amount,
     ).accounts({
       signer: this.wallet.publicKey,
       signerTokenAccount,
