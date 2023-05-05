@@ -22,16 +22,18 @@ import {
 } from "../utils/constants"
 import * as token from "@solana/spl-token"
 import { IDL } from '../utils/idl/swap_tokens'
-import { useGetBalance } from "../hooks/useGetBalance"
 
 export const AddLiquidityType: FC = () => {
-  const { getBalance } = useGetBalance()
 
   const [solAmount, setSolAmount] = useState(0)
   const [moveAmount, setMoveAmount] = useState(0)
 
   const { connection } = useConnection()
-  const { publicKey, wallet, sendTransaction, signTransaction, signAllTransactions } = useWallet();
+  const { publicKey, wallet, signTransaction, signAllTransactions } = useWallet();
+
+  const sleep = async (ms: number) => {
+    return new Promise((r) => setTimeout(r, ms));
+  };
 
   const handleSubmit = (event: any) => {
     event.preventDefault()
@@ -69,7 +71,6 @@ export const AddLiquidityType: FC = () => {
       new Web3.PublicKey(poolProgramId),
       provider
     )
-    console.log(">>>>", solAmount, moveAmount)
 
     const instruction = await program.methods.addLiquidity(
       new BN(solAmount * LAMPORTS_PER_SOL),
@@ -84,16 +85,27 @@ export const AddLiquidityType: FC = () => {
     }).instruction()
 
     try {
-      const signature = await sendTransaction(
-        new Web3.Transaction().add(instruction),
-        connection
-      );
+      const transaction = new Web3.Transaction().add(instruction)
+      let blockhash = (await connection.getLatestBlockhash('finalized')).blockhash;
+      transaction.recentBlockhash = blockhash;
+      transaction.feePayer = publicKey;
+      const signedTransaction = await signTransaction(transaction)
+      const rawTransaction = signedTransaction.serialize();
+      const blockhashResponse = await connection.getLatestBlockhashAndContext();
+      const lastValidBlockHeight = blockhashResponse.context.slot + 5;
+      let blockheight = await connection.getBlockHeight();
 
-      connection.confirmTransaction(signature, "processed").then(() => {
-        getBalance()
-      })
-
+      let signature = await connection.sendRawTransaction(rawTransaction, {
+        skipPreflight: true,
+      });
       toast.success(`Transaction sent! Transaction Signature: ${signature}`)
+      while (blockheight < lastValidBlockHeight) {
+        signature = await connection.sendRawTransaction(rawTransaction, {
+          skipPreflight: true,
+        });
+        await sleep(500);
+        blockheight = await connection.getBlockHeight()
+      }
     } catch (error) {
       toast.error(`Transaction failed: ${error}`)
     }
