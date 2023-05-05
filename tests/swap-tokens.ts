@@ -1,9 +1,14 @@
 import * as anchor from '@project-serum/anchor';
 import { AnchorError, Program, BN } from '@project-serum/anchor';
 import {
+  Account,
   createMint,
   createAssociatedTokenAccount,
   mintToChecked,
+  transfer,
+  MINT_SIZE,
+  getMinimumBalanceForRentExemptMint,
+  createInitializeMintInstruction,
 } from '@solana/spl-token';
 import {
   PublicKey,
@@ -31,6 +36,7 @@ describe('swap-tokens', () => {
   let payerMoveTokenAccount: PublicKey;
   let poolAccount: PublicKey;
   let poolMoveTokenAccount: PublicKey;
+  let poolOwner: PublicKey = payerAccount;
   let alice: Keypair = anchor.web3.Keypair.generate();
   let aliceMoveTokenAccount: PublicKey;
 
@@ -368,6 +374,8 @@ describe('swap-tokens', () => {
     expect(tokenBeforeAmount.value.amount).to.be.equal('890000000000'); // 890 MOVE;
     // let balanceSolBefore = await connection.getBalance(poolAccount);
     // console.log(`${balanceSolBefore / LAMPORTS_PER_SOL} SOL`);
+    // let balanceUserSolBefore = await connection.getBalance(poolOwner);
+    // console.log(`${balanceUserSolBefore / LAMPORTS_PER_SOL} SOL`);
     await program.methods.swap(
       new BN(1_000_000_000), // 1 SOL
     ).accounts({
@@ -375,11 +383,14 @@ describe('swap-tokens', () => {
       signerTokenAccount: payerMoveTokenAccount,
       poolAccount,
       poolMoveTokenAccount,
+      fundingWallet: poolOwner,
       systemProgram: anchor.web3.SystemProgram.programId,
       tokenProgram: TOKEN_PROGRAM_ID,
     }).rpc();
     // let balanceSolAfter = await connection.getBalance(poolAccount);
     // console.log(`${balanceSolAfter / LAMPORTS_PER_SOL} SOL`);
+    // let balanceUserSolAfter = await connection.getBalance(poolOwner);
+    // console.log(`${balanceUserSolAfter / LAMPORTS_PER_SOL} SOL`);
     let tokenAfterAmount = await connection.getTokenAccountBalance(payerMoveTokenAccount);
     expect(tokenAfterAmount.value.amount).to.be.equal('900000000000'); // 900 MOVE;
     let tokenAmount = await connection.getTokenAccountBalance(poolMoveTokenAccount);
@@ -397,6 +408,7 @@ describe('swap-tokens', () => {
         signerTokenAccount: payerMoveTokenAccount,
         poolAccount,
         poolMoveTokenAccount,
+        fundingWallet: poolOwner,
         tokenProgram: TOKEN_PROGRAM_ID,
         systemProgram: anchor.web3.SystemProgram.programId,
       }).rpc();
@@ -419,6 +431,7 @@ describe('swap-tokens', () => {
       signerTokenAccount: aliceMoveTokenAccount,
       poolAccount,
       poolMoveTokenAccount,
+      fundingWallet: poolOwner,
       tokenProgram: TOKEN_PROGRAM_ID,
       systemProgram: anchor.web3.SystemProgram.programId,
     }).signers([alice]).rpc();
@@ -444,6 +457,7 @@ describe('swap-tokens', () => {
         signerTokenAccount: aliceMoveTokenAccount,
         poolAccount,
         poolMoveTokenAccount,
+        fundingWallet: poolOwner,
         tokenProgram: TOKEN_PROGRAM_ID,
         systemProgram: anchor.web3.SystemProgram.programId,
       }).signers([alice]).rpc();

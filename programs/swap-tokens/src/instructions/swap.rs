@@ -18,6 +18,12 @@ pub struct Swap<'info> {
     bump = pool_account.move_token_account_bump,
   )]
   pub pool_move_token_account: Box<Account<'info, TokenAccount>>,
+  /// CHECK: wallet which receive fund
+  #[account(
+    mut,
+    address = pool_account.owner
+  )]
+  pub funding_wallet: AccountInfo<'info>,
   pub system_program: Program<'info, System>,
   pub token_program: Program<'info, Token>,
 }
@@ -40,12 +46,12 @@ pub fn exec(
   invoke(
     &system_instruction::transfer(
       &ctx.accounts.signer.key(),
-      &pool.key(),
+      &pool.owner,
       lamports,
     ),
     &[
       ctx.accounts.signer.to_account_info(),
-      pool.to_account_info(),
+      ctx.accounts.funding_wallet.to_account_info(),
       ctx.accounts.system_program.to_account_info(),
     ],
   )?;
